@@ -30,10 +30,16 @@ LOCAL_SHARED_LIBRARIES := \
 	libcutils \
 	libhardware \
 	libsync \
-	libutils
+	libutils \
+	liblog
 
 ifneq ($(BOARD_FRAMEBUFFER_FORCE_FORMAT),)
 LOCAL_CFLAGS += -DFRAMEBUFFER_FORCE_FORMAT=$(BOARD_FRAMEBUFFER_FORCE_FORMAT)
+endif
+
+# Executed only on QCOM BSPs
+ifeq ($(TARGET_USES_QCOM_BSP),true)
+    LOCAL_CFLAGS += -DQCOM_BSP
 endif
 
 ifeq ($(TARGET_SOC),exynos4210)

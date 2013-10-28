@@ -2,30 +2,26 @@ LOCAL_PATH:= $(call my-dir)
 include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES:= \
-    Client.cpp                              \
-    DisplayDevice.cpp                       \
-    EventThread.cpp                         \
-    Layer.cpp                               \
-    LayerBase.cpp                           \
-    LayerDim.cpp                            \
-    LayerScreenshot.cpp                     \
-    DisplayHardware/FramebufferSurface.cpp  \
-    DisplayHardware/GraphicBufferAlloc.cpp  \
-    DisplayHardware/HWComposer.cpp          \
-    DisplayHardware/PowerHAL.cpp            \
-    GLExtensions.cpp                        \
-    MessageQueue.cpp                        \
-    SurfaceFlinger.cpp                      \
-    SurfaceTextureLayer.cpp                 \
-    Transform.cpp                           \
-    
+    Client.cpp \
+    DisplayDevice.cpp \
+    EventThread.cpp \
+    FrameTracker.cpp \
+    GLExtensions.cpp \
+    Layer.cpp \
+    LayerDim.cpp \
+    MessageQueue.cpp \
+    SurfaceFlinger.cpp \
+    SurfaceFlingerConsumer.cpp \
+    SurfaceTextureLayer.cpp \
+    Transform.cpp \
+    DisplayHardware/FramebufferSurface.cpp \
+    DisplayHardware/HWComposer.cpp \
+    DisplayHardware/PowerHAL.cpp \
+    DisplayHardware/VirtualDisplaySurface.cpp \
 
 LOCAL_CFLAGS:= -DLOG_TAG=\"SurfaceFlinger\"
 LOCAL_CFLAGS += -DGL_GLEXT_PROTOTYPES -DEGL_EGLEXT_PROTOTYPES
 
-ifeq ($(TARGET_BOARD_PLATFORM),omap3)
-	LOCAL_CFLAGS += -DNO_RGBX_8888
-endif
 ifeq ($(TARGET_BOARD_PLATFORM),omap4)
 	LOCAL_CFLAGS += -DHAS_CONTEXT_PRIORITY
 endif
@@ -40,6 +36,12 @@ endif
 
 ifeq ($(BOARD_EGL_NEEDS_LEGACY_FB),true)
 	LOCAL_CFLAGS += -DBOARD_EGL_NEEDS_LEGACY_FB
+        ifeq ($(TARGET_BOARD_PLATFORM),exynos4)
+	    LOCAL_CFLAGS += -DEGL_NEEDS_FNW
+        endif
+        ifeq ($(TARGET_QCOM_DISPLAY_VARIANT), legacy)
+	    LOCAL_CFLAGS += -DEGL_NEEDS_FNW
+        endif
 endif
 
 ifneq ($(NUM_FRAMEBUFFER_SURFACE_BUFFERS),)
@@ -48,6 +50,7 @@ endif
 
 LOCAL_SHARED_LIBRARIES := \
 	libcutils \
+	liblog \
 	libdl \
 	libhardware \
 	libutils \
@@ -57,13 +60,21 @@ LOCAL_SHARED_LIBRARIES := \
 	libui \
 	libgui
 
+ifeq ($(TARGET_USES_QCOM_BSP), true)
+ifneq ($(TARGET_QCOM_DISPLAY_VARIANT),)
+    LOCAL_C_INCLUDES += hardware/qcom/display-$(TARGET_QCOM_DISPLAY_VARIANT)/libgralloc
+else
+    LOCAL_C_INCLUDES += hardware/qcom/display/libgralloc
+endif
+    LOCAL_CFLAGS += -DQCOM_BSP
+endif
+
 ifeq ($(BOARD_USES_SAMSUNG_HDMI),true)
         LOCAL_CFLAGS += -DSAMSUNG_HDMI_SUPPORT
         LOCAL_SHARED_LIBRARIES += libTVOut libhdmiclient
         LOCAL_C_INCLUDES += hardware/samsung/$(TARGET_BOARD_PLATFORM)/libhdmi/libhdmiservice
         LOCAL_C_INCLUDES += hardware/samsung/$(TARGET_BOARD_PLATFORM)/include
 endif
-
 
 LOCAL_MODULE:= libsurfaceflinger
 
@@ -80,6 +91,7 @@ LOCAL_SRC_FILES:= \
 
 LOCAL_SHARED_LIBRARIES := \
 	libcutils \
+	liblog \
 	libdl
 
 LOCAL_MODULE:= libsurfaceflinger_ddmconnection
